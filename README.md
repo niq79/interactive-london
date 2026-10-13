@@ -2,6 +2,10 @@
 
 A mobile family field guide for 13–17 October 2026: a day-by-day Leaflet map, sourced stories, Google Maps directions, and visited stops saved on each device.
 
+The map opens in dark mode. Tap the floating L/day control to choose a day, switch to the light theme, share a stop, or read the installation guide. Theme choice is saved on the device. The amber dashed line shows itinerary order, not a calculated walking route.
+
+On iPhone, use Safari → Share → Add to Home Screen, enable Open as Web App if shown, and launch the London icon for an experience without the address bar. The site includes standalone app metadata and an Apple touch icon. Browser toolbar visibility in a normal tab is controlled by Safari.
+
 ## Run locally
 
 ```sh

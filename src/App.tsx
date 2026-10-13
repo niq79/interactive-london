@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Compass, ExternalLink, Footprints, Info, List, Map as MapIcon, Navigation, Share2, TrainFront, WifiOff, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, ExternalLink, Footprints, Info, List, Map as MapIcon, Moon, Navigation, Share2, Sun, TrainFront, WifiOff, X } from 'lucide-react';
 import { days, homeCoordinates, type Stop } from './data';
 import { directionsUrl, initialDay, londonDate, readSaved } from './utils';
 import TripMap from './Map';
 
 const labels = { landmark: 'History & landmarks', park: 'A little green space', shopping: 'Browse & discover', food: 'Food & a pause', transport: 'The next journey', film: 'Behind the screen', show: 'An evening on stage', museum: 'Objects & stories' };
 const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
+const isTheme = (value: unknown): value is 'dark' | 'light' => value === 'dark' || value === 'light';
 function startingSelection() {
   const [dayId, stopId] = location.hash.slice(1).split('/');
   const day = days.find(item => item.id === dayId) ?? days.find(item => item.id === initialDay(days.map(item => item.id)))!;
@@ -24,6 +25,11 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => readSaved('london-theme-v1', 'dark', isTheme));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  const currentDayButton = useRef<HTMLButtonElement>(null);
   const sheetBody = useRef<HTMLDivElement>(null);
   const handleStart = useRef<number | null>(null);
   const handleDragged = useRef(false);
@@ -37,6 +43,25 @@ export default function App() {
   const completed = required.filter(item => visited.includes(item.id)).length;
   const today = londonDate();
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#171e1b' : '#faf8f2');
+    try { localStorage.setItem('london-theme-v1', JSON.stringify(theme)); }
+    catch { /* Theme still works when browser storage is unavailable. */ }
+  }, [theme]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    currentDayButton.current?.focus();
+    const outside = (event: PointerEvent) => {
+      if (!headerRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMenuOpen(false); menuTrigger.current?.focus(); }
+    };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [menuOpen]);
   useEffect(() => {
     try { localStorage.setItem('london-visited-v1', JSON.stringify(visited)); }
     catch { setStorageAvailable(false); }
@@ -85,6 +110,8 @@ export default function App() {
     const stop = next.stops.find(item => !item.optional && !visited.includes(item.id)) ?? next.stops.find(item => !item.optional)!;
     setSelection({ dayId: id, stopId: stop.id });
     setExpanded(false);
+    setMenuOpen(false);
+    menuTrigger.current?.focus();
   }
   function markVisited() {
     setVisited(items => items.includes(selected.id) ? items.filter(id => id !== selected.id) : [...items, selected.id]);
@@ -115,15 +142,17 @@ export default function App() {
   const baseStop: Stop = { ...selected, title: 'Edgware Road area', coordinates: homeCoordinates };
 
   return <div className="app-shell">
-    <header className="app-header">
-      <a className="brand" href="#" onClick={event => { event.preventDefault(); chooseDay(initialDay(days.map(item => item.id))); }} aria-label="London together · today’s itinerary"><span className="brand-mark">L<span /></span><span className="brand-name">London<span>, together.</span></span></a>
-      <div className="trip-date"><span>THE FAMILY FIELD GUIDE</span><strong>13—17 October 2026</strong></div>
-      <div className="header-actions"><button onClick={share} className="icon-button" aria-label="Share this stop"><Share2 size={19} /></button><button onClick={() => setGuideOpen(true)} className="icon-button" aria-label="Open trip guide and offline information"><Info size={20} /></button></div>
+    <header className="app-header" ref={headerRef}>
+      <button className={`trip-menu-trigger ${menuOpen ? 'open' : ''}`} ref={menuTrigger} onClick={() => setMenuOpen(value => !value)} aria-label={`Choose a day · ${day.weekday} ${day.date} October selected`} aria-expanded={menuOpen} aria-controls="trip-menu"><span className="brand-mark">L<span /></span><span className="brand-name">London<span>, together.</span></span><span className="current-day">{day.weekday.slice(0, 3)} <strong>{day.date}</strong></span><ChevronDown size={16} className="menu-chevron" /></button>
+      <div className="header-caption">YOUR FAMILY FIELD GUIDE <span>13—17 OCTOBER 2026</span></div>
+      <div className="view-toggle" role="group" aria-label="View mode"><button className={view === 'map' ? 'active' : ''} onClick={() => { setView('map'); setExpanded(false); setMenuOpen(false); }} aria-pressed={view === 'map'}><MapIcon size={16} />Map</button><button className={view === 'list' ? 'active' : ''} onClick={() => { setView('list'); setExpanded(false); setMenuOpen(false); }} aria-pressed={view === 'list'}><List size={17} />List</button></div>
+      {menuOpen && <div id="trip-menu" className="trip-menu">
+        <div className="menu-intro"><span className="eyebrow">13—17 OCTOBER · LONDON TIME</span><h2>Five days. Your London.</h2></div>
+        <nav className="menu-days" aria-label="Choose a trip day">{days.map(item => <button key={item.id} ref={item.id === day.id ? currentDayButton : undefined} className={`menu-day ${item.id === day.id ? 'active' : ''}`} onClick={() => chooseDay(item.id)} aria-current={item.id === day.id ? 'date' : undefined}><span className="menu-day-date">{item.date}</span><span className="menu-day-text"><strong>{item.weekday}{item.id === today && <small>Today</small>}</strong><span>{item.title}</span></span>{item.id === day.id ? <Check size={17} /> : <ChevronRight size={16} />}</button>)}</nav>
+        <div className="menu-day-summary"><h3>{day.title}</h3><p>{day.subtitle}</p><div className="reminder"><Clock3 size={15} /><span>{day.reminder}</span></div><span className="menu-progress"><Check size={13} />{completed} of {required.length} planned stops visited</span></div>
+        <div className="menu-tools"><button onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}<span>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</span></button><button onClick={() => { setMenuOpen(false); void share(); }}><Share2 size={17} /><span>Share stop</span></button><button onClick={() => { setMenuOpen(false); setGuideOpen(true); }}><Info size={18} /><span>Trip guide & install</span></button></div>
+      </div>}
     </header>
-    <nav className="day-nav" aria-label="Choose a trip day">
-      <div className="nav-intro"><Compass size={18} /><span>Five days.<br /><strong>A city of stories.</strong></span></div>
-      {days.map(item => <button key={item.id} className={`day-tab ${item.id === day.id ? 'active' : ''}`} onClick={() => chooseDay(item.id)} aria-current={item.id === day.id ? 'date' : undefined}><span className="day-short">{item.weekday.slice(0, 3)}</span><span className="day-long">{item.weekday}</span><strong>{item.date}<span> OCT</span></strong>{item.id === today && <span className="today-dot" aria-label="Today" />}</button>)}
-    </nav>
     <div className="workspace">
       <aside className="itinerary-sidebar">
         <div className="day-intro"><span className="eyebrow">DAY {days.indexOf(day) + 1} / 05 · {day.weekday.toUpperCase()}</span><h1>{day.title}</h1><p>{day.subtitle}</p><div className="reminder"><Clock3 size={17} /><span>{day.reminder}</span></div>
@@ -137,10 +166,8 @@ export default function App() {
         <div className="sidebar-footer">A little history. A lot to discover.</div>
       </aside>
       <main className={`main-stage ${view === 'list' ? 'list-view' : ''}`}>
-        <div className="mobile-day-title"><div><span className="eyebrow">DAY {days.indexOf(day) + 1} / 05</span><h1>{day.title}</h1></div><span className="mobile-progress" aria-label={`${completed} of ${required.length} planned stops visited`}><Check size={14} />{completed}/{required.length}</span></div>
-        <div className="view-toggle" role="group" aria-label="View mode"><button className={view === 'map' ? 'active' : ''} onClick={() => { setView('map'); setExpanded(false); }} aria-pressed={view === 'map'}><MapIcon size={16} />Map</button><button className={view === 'list' ? 'active' : ''} onClick={() => { setView('list'); setExpanded(false); }} aria-pressed={view === 'list'}><List size={17} />List</button></div>
-        <div className="map-wrapper" style={{ visibility: view === 'map' ? 'visible' : 'hidden' }}><TripMap stops={mapStops} selected={selected} visited={visited} onSelect={selectStop} online={online} onNotice={setToast} /></div>
-        {view === 'list' && <div className="mobile-list"><div className="list-day-summary"><span className="eyebrow">{day.weekday.toUpperCase()} · {day.date} OCTOBER</span><h2>{day.subtitle}</h2><div className="reminder"><Clock3 size={17} /><span>{day.reminder}</span></div><p>{day.note}</p>{day.stops.some(item => item.optional) && <label className="optional-switch"><input type="checkbox" checked={showOptional} onChange={toggleOptional} /><span>Show optional stops</span></label>}</div>{stopRows()}{day.alternatives && <div className="list-alternatives"><h3>Alternative afternoons</h3><p>Choose one instead of Barbican and Brick Lane.</p>{day.alternatives.map(stop => <button key={stop.id} onClick={() => { selectStop(stop); setExpanded(true); }}>{stop.title}<ArrowUpRight size={17} /></button>)}</div>}<a className="back-to-base" href={directionsUrl(baseStop, 'transit')} target="_blank" rel="noopener noreferrer">Back to the Edgware Road area<ArrowUpRight size={16} /></a></div>}
+        <div className="map-wrapper" style={{ visibility: view === 'map' ? 'visible' : 'hidden' }}><TripMap stops={mapStops} selected={selected} visited={visited} onSelect={selectStop} online={online} onNotice={setToast} theme={theme} /></div>
+        {view === 'list' && <div className="mobile-list"><div className="list-day-summary"><span className="eyebrow">{day.weekday.toUpperCase()} · {day.date} OCTOBER</span><h1>{day.title}</h1><h2>{day.subtitle}</h2><div className="reminder"><Clock3 size={17} /><span>{day.reminder}</span></div><p>{day.note}</p>{day.stops.some(item => item.optional) && <label className="optional-switch"><input type="checkbox" checked={showOptional} onChange={toggleOptional} /><span>Show optional stops</span></label>}</div>{stopRows()}{day.alternatives && <div className="list-alternatives"><h3>Alternative afternoons</h3><p>Choose one instead of Barbican and Brick Lane.</p>{day.alternatives.map(stop => <button key={stop.id} onClick={() => { selectStop(stop); setExpanded(true); }}>{stop.title}<ArrowUpRight size={17} /></button>)}</div>}<a className="back-to-base" href={directionsUrl(baseStop, 'transit')} target="_blank" rel="noopener noreferrer">Back to the Edgware Road area<ArrowUpRight size={16} /></a></div>}
         {(!online || !storageAvailable) && <div className="connection-banner" role="status"><WifiOff size={14} />{!online ? 'Offline · stories & itinerary available' : 'Progress stays in this session; browser storage is unavailable'}</div>}
         <section className={`stop-sheet ${expanded ? 'expanded' : ''} ${view === 'list' && !expanded ? 'hide-on-mobile' : ''}`} aria-label={`${selected.title} pocket guide`}>
           <button className="sheet-handle" onClick={() => { if (!handleDragged.current) setExpanded(value => !value); handleDragged.current = false; }} aria-label={expanded ? 'Collapse stop details' : 'Expand stop details'} aria-expanded={expanded}
@@ -148,7 +175,7 @@ export default function App() {
             onPointerUp={event => { if (handleStart.current !== null && Math.abs(event.clientY - handleStart.current) > 35) { handleDragged.current = true; setExpanded(event.clientY < handleStart.current); event.preventDefault(); } handleStart.current = null; }}><span /></button>
           <div className="sheet-body" ref={sheetBody}>
             <div className="sheet-topline"><span className="eyebrow">{labels[selected.category]}</span><div className="sheet-pagination"><button onClick={() => jump(-1)} disabled={currentIndex <= 0} aria-label="Previous stop"><ChevronLeft size={20} /></button><span>{currentIndex < 0 ? 'ALT' : String(currentIndex + 1).padStart(2, '0')}<span> / {String(stops.length).padStart(2, '0')}</span></span><button onClick={() => jump(1)} disabled={currentIndex < 0 || currentIndex === stops.length - 1} aria-label="Next stop"><ChevronRight size={20} /></button></div></div>
-            <div className="sheet-title"><h2>{selected.title}</h2><button className={`visited-button ${visited.includes(selected.id) ? 'checked' : ''}`} onClick={markVisited} aria-label={visited.includes(selected.id) ? `Mark ${selected.title} unvisited` : `Mark ${selected.title} visited`} aria-pressed={visited.includes(selected.id)}><Check size={20} /></button></div>
+            <div className="sheet-title"><h2><button onClick={() => setExpanded(value => !value)} aria-expanded={expanded} aria-label={`${expanded ? 'Collapse' : 'Read'} ${selected.title} story`}>{selected.title}</button></h2><button className={`visited-button ${visited.includes(selected.id) ? 'checked' : ''}`} onClick={markVisited} aria-label={visited.includes(selected.id) ? `Mark ${selected.title} unvisited` : `Mark ${selected.title} visited`} aria-pressed={visited.includes(selected.id)}><Check size={20} /></button></div>
             <div className="stop-meta"><span><Clock3 size={14} />{selected.time}</span>{selected.optional && <span className="optional-badge">Optional</span>}</div>
             {selected.booking && <div className="booking-badge"><span />{selected.booking} · from your itinerary</div>}
             <p className="sheet-description">{selected.description}</p>
@@ -160,7 +187,7 @@ export default function App() {
     </div>
     {toast && <div className="toast" role="status">{toast}<button onClick={() => setToast('')} aria-label="Dismiss message"><X size={16} /></button></div>}
     <dialog ref={guideRef} className="guide-dialog" onCancel={() => setGuideOpen(false)} onClick={event => { if (event.target === event.currentTarget) setGuideOpen(false); }}>
-      <button className="dialog-close icon-button" onClick={() => setGuideOpen(false)} aria-label="Close guide"><X size={21} /></button><span className="eyebrow">YOUR POCKET GUIDE</span><h2>A city of stories.<br />Ready when you are.</h2><p>Choose a day, tap a pin, and read the story. Directions open Google Maps from your current location when available.</p><div className="guide-status"><span className={`status-dot ${offlineReady ? 'ready' : ''}`} /><strong>{offlineReady ? 'Itinerary & stories saved for offline use' : 'Offline copy is not ready yet'}</strong></div><p className="guide-small">{offlineReady ? 'The map tiles and Google Maps directions need connectivity. Open List view when offline.' : 'Keep this page open online briefly after publication to save the guide. Offline saving requires a supported browser.'}</p><div className="guide-divider" /><h3>Made for your trip</h3><p className="guide-small">13–17 October 2026 · all times are in London time. Your three fixed visits follow plan.txt. Optional rooftops and afternoon swaps are suggestions, not additional bookings.</p><p className="guide-small">Visited checkmarks are saved only on this device. The base pin shows the Edgware Road area; use your accommodation’s exact address for the final leg.</p><p className="guide-small">Add this page to your phone’s home screen using your browser’s menu or Share → Add to Home Screen.</p><a className="guide-link" href="https://tfl.gov.uk/tube-dlr-overground/status/" target="_blank" rel="noopener noreferrer">Check current TfL services<ArrowUpRight size={16} /></a><button className="guide-done" onClick={() => setGuideOpen(false)}>Let’s explore<ArrowRight size={17} /></button>
+      <button className="dialog-close icon-button" onClick={() => setGuideOpen(false)} aria-label="Close guide"><X size={21} /></button><span className="eyebrow">YOUR POCKET GUIDE</span><h2>A city of stories.<br />Ready when you are.</h2><p>Tap the L/day button to choose a day, switch themes, or share a stop. Tap a pin and open its story. Directions open Google Maps from your current location when available.</p><div className="guide-status"><span className={`status-dot ${offlineReady ? 'ready' : ''}`} /><strong>{offlineReady ? 'Itinerary & stories saved for offline use' : 'Offline copy is not ready yet'}</strong></div><p className="guide-small">{offlineReady ? 'The map tiles and Google Maps directions need connectivity. Open List view when offline.' : 'Keep this page open online briefly after publication to save the guide. Offline saving requires a supported browser.'}</p><div className="guide-divider" /><h3>More map. No address bar.</h3><p className="guide-small">On iPhone, open this site in Safari. Choose Share → Add to Home Screen, turn on Open as Web App if shown, then launch the London icon. This opens the guide without Safari’s address bar.</p><p className="guide-small">In a normal Safari tab, use Page Menu → Hide Toolbar if available. The website cannot hide browser controls automatically.</p><h3>Made for your trip</h3><p className="guide-small">13–17 October 2026 · all times are in London time. Your three fixed visits follow plan.txt. Optional rooftops and afternoon swaps are suggestions, not additional bookings.</p><p className="guide-small">Visited checkmarks and your theme choice are saved only on this device. The base pin shows the Edgware Road area; use your accommodation’s exact address for the final leg.</p><a className="guide-link" href="https://tfl.gov.uk/tube-dlr-overground/status/" target="_blank" rel="noopener noreferrer">Check current TfL services<ArrowUpRight size={16} /></a><button className="guide-done" onClick={() => setGuideOpen(false)}>Let’s explore<ArrowRight size={17} /></button>
     </dialog>
   </div>;
 }

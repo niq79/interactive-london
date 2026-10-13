@@ -4,8 +4,8 @@ import { LocateFixed, Maximize, MapPin } from 'lucide-react';
 import type { Stop } from './data';
 import { homeCoordinates } from './data';
 
-type Props = { stops: Stop[]; selected: Stop; visited: string[]; onSelect: (stop: Stop) => void; online: boolean; onNotice: (message: string) => void };
-export default function TripMap({ stops, selected, visited, onSelect, online, onNotice }: Props) {
+type Props = { stops: Stop[]; selected: Stop; visited: string[]; onSelect: (stop: Stop) => void; online: boolean; onNotice: (message: string) => void; theme: 'dark' | 'light' };
+export default function TripMap({ stops, selected, visited, onSelect, online, onNotice, theme }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
@@ -22,7 +22,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   function padding(): { paddingTopLeft: L.PointExpression; paddingBottomRight: L.PointExpression } {
     const height = map.current?.getSize().y ?? 700;
     return window.innerWidth < 768
-      ? { paddingTopLeft: [30, Math.min(192, height * 0.35)], paddingBottomRight: [30, Math.min(310, height * 0.45)] }
+      ? { paddingTopLeft: [30, Math.min(100, height * 0.20)], paddingBottomRight: [58, Math.min(205, height * 0.32)] }
       : { paddingTopLeft: [44, 64], paddingBottomRight: [Math.min(440, (map.current?.getSize().x ?? 1000) * 0.45), 64] };
   }
 
@@ -65,7 +65,9 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
     markers.current.clearLayers();
     const regular = stops.filter(stop => !stop.optional);
     if (regular.length > 1) {
-      L.polyline(regular.map(stop => stop.coordinates), { color: '#63796c', weight: 2, dashArray: '4 8', opacity: 0.65, interactive: false }).addTo(markers.current);
+      const points = regular.map(stop => stop.coordinates);
+      L.polyline(points, { color: theme === 'dark' ? '#111914' : '#ffffff', weight: 8, opacity: 0.9, interactive: false }).addTo(markers.current);
+      L.polyline(points, { color: theme === 'dark' ? '#ffc36a' : '#a95712', weight: 4, dashArray: '12 9', opacity: 1, interactive: false }).addTo(markers.current);
     }
     L.marker(homeCoordinates, { icon: L.divIcon({ className: 'base-marker', html: '<span aria-hidden="true">⌂</span>', iconSize: [28, 28], iconAnchor: [14, 14] }), title: 'Edgware Road area · approximate base', keyboard: false }).bindTooltip('Edgware Road · approximate base').addTo(markers.current);
     stops.forEach((stop, index) => {
@@ -85,7 +87,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
     });
     const key = stops.map(stop => stop.id).join(',');
     if (lastFit.current !== key) { fit(); lastFit.current = key; }
-  }, [stops, selected.id, visited]);
+  }, [stops, selected.id, visited, theme]);
 
   useEffect(() => {
     map.current?.panInside(selected.coordinates, { ...padding(), animate: true });

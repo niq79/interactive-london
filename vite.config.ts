@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react(), {
     name: 'offline-pocket-guide',
     generateBundle(_, bundle) {
-      const files = ['index.html', 'icon.svg', 'manifest.webmanifest', ...Object.keys(bundle).filter(name => name !== 'index.html')];
+      const files = ['index.html', 'icon.svg', 'apple-touch-icon.png', 'manifest.webmanifest', ...Object.keys(bundle).filter(name => name !== 'index.html')];
       this.emitFile({ type: 'asset', fileName: 'sw.js', source: `
 const VERSION = '${offlineVersion}';
 const CACHE = 'london-pocket-' + new URL(self.registration.scope).pathname + '-' + VERSION;
