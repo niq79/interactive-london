@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, ExternalLink, Footprints, Info, List, Map as MapIcon, Moon, Navigation, Share2, Sun, TrainFront, WifiOff, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, ExternalLink, Footprints, Info, List, Map as MapIcon, Navigation, Share2, TrainFront, WifiOff, X } from 'lucide-react';
 import { days, homeCoordinates, type Stop } from './data';
+import { isTheme, themeOrder, themes, type Theme } from './theme';
 import { directionsUrl, initialDay, londonDate, readSaved } from './utils';
 import TripMap from './Map';
 
 const labels = { landmark: 'History & landmarks', park: 'A little green space', shopping: 'Browse & discover', food: 'Food & a pause', transport: 'The next journey', film: 'Behind the screen', show: 'An evening on stage', museum: 'Objects & stories' };
 const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
-const isTheme = (value: unknown): value is 'dark' | 'light' => value === 'dark' || value === 'light';
 function startingSelection() {
   const [dayId, stopId] = location.hash.slice(1).split('/');
   const day = days.find(item => item.id === dayId) ?? days.find(item => item.id === initialDay(days.map(item => item.id)))!;
@@ -25,7 +25,7 @@ export default function App() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => readSaved('london-theme-v1', 'dark', isTheme));
+  const [theme, setTheme] = useState<Theme>(() => readSaved('london-theme-v1', 'dark', isTheme));
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const menuTrigger = useRef<HTMLButtonElement>(null);
@@ -45,7 +45,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#171e1b' : '#faf8f2');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themes[theme].themeColor);
     try { localStorage.setItem('london-theme-v1', JSON.stringify(theme)); }
     catch { /* Theme still works when browser storage is unavailable. */ }
   }, [theme]);
@@ -150,7 +150,8 @@ export default function App() {
         <div className="menu-intro"><span className="eyebrow">13—17 OCTOBER · LONDON TIME</span><h2>Five days. Your London.</h2></div>
         <nav className="menu-days" aria-label="Choose a trip day">{days.map(item => <button key={item.id} ref={item.id === day.id ? currentDayButton : undefined} className={`menu-day ${item.id === day.id ? 'active' : ''}`} onClick={() => chooseDay(item.id)} aria-current={item.id === day.id ? 'date' : undefined}><span className="menu-day-date">{item.date}</span><span className="menu-day-text"><strong>{item.weekday}{item.id === today && <small>Today</small>}</strong><span>{item.title}</span></span>{item.id === day.id ? <Check size={17} /> : <ChevronRight size={16} />}</button>)}</nav>
         <div className="menu-day-summary"><h3>{day.title}</h3><p>{day.subtitle}</p><div className="reminder"><Clock3 size={15} /><span>{day.reminder}</span></div><span className="menu-progress"><Check size={13} />{completed} of {required.length} planned stops visited</span></div>
-        <div className="menu-tools"><button onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}<span>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</span></button><button onClick={() => { setMenuOpen(false); void share(); }}><Share2 size={17} /><span>Share stop</span></button><button onClick={() => { setMenuOpen(false); setGuideOpen(true); }}><Info size={18} /><span>Trip guide & install</span></button></div>
+        <div className="theme-picker"><span className="theme-picker-label">COLOUR THEME</span><div className="theme-options" role="radiogroup" aria-label="Colour theme">{themeOrder.map(option => <button key={option} className={theme === option ? 'active' : ''} onClick={() => setTheme(option)} role="radio" aria-checked={theme === option}><span className={`theme-swatch ${option}`} aria-hidden="true"><span /></span><span>{themes[option].label}</span>{theme === option && <Check size={14} />}</button>)}</div></div>
+        <div className="menu-tools"><button onClick={() => { setMenuOpen(false); void share(); }}><Share2 size={17} /><span>Share stop</span></button><button onClick={() => { setMenuOpen(false); setGuideOpen(true); }}><Info size={18} /><span>Trip guide & install</span></button></div>
       </div>}
     </header>
     <div className="workspace">

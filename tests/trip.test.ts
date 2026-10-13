@@ -29,6 +29,14 @@ test('the three fixed sightseeing bookings stay on their original days and times
   assert.match(days[4].note, /No direct Stansted Express/);
 });
 
+test('Wednesday shopping follows the planned Oxford Street to Piccadilly order', () => {
+  const ids = days[1].stops.map(stop => stop.id);
+  const shoppingRoute = ['oxford', 'victorias-secret', 'carnaby', 'hollister', 'piccadilly'];
+  assert.deepEqual(ids.filter(id => shoppingRoute.includes(id)), shoppingRoute);
+  assert.match(days[1].stops.find(stop => stop.id === 'victorias-secret')?.tip ?? '', /120–128 Oxford Street/);
+  assert.match(days[1].stops.find(stop => stop.id === 'hollister')?.tip ?? '', /83–97 Regent Street/);
+});
+
 test('every itinerary stop has unique identity, safe sources, and valid map coordinates', () => {
   const stops = days.flatMap(day => [...day.stops, ...(day.alternatives ?? [])]);
   assert.equal(new Set(stops.map(stop => stop.id)).size, stops.length);

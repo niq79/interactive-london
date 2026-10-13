@@ -3,8 +3,9 @@ import L from 'leaflet';
 import { LocateFixed, Maximize, MapPin } from 'lucide-react';
 import type { Stop } from './data';
 import { homeCoordinates } from './data';
+import { themes, type Theme } from './theme';
 
-type Props = { stops: Stop[]; selected: Stop; visited: string[]; onSelect: (stop: Stop) => void; online: boolean; onNotice: (message: string) => void; theme: 'dark' | 'light' };
+type Props = { stops: Stop[]; selected: Stop; visited: string[]; onSelect: (stop: Stop) => void; online: boolean; onNotice: (message: string) => void; theme: Theme };
 export default function TripMap({ stops, selected, visited, onSelect, online, onNotice, theme }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -66,8 +67,8 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
     const regular = stops.filter(stop => !stop.optional);
     if (regular.length > 1) {
       const points = regular.map(stop => stop.coordinates);
-      L.polyline(points, { color: theme === 'dark' ? '#111914' : '#ffffff', weight: 8, opacity: 0.9, interactive: false }).addTo(markers.current);
-      L.polyline(points, { color: theme === 'dark' ? '#ffc36a' : '#a95712', weight: 4, dashArray: '12 9', opacity: 1, interactive: false }).addTo(markers.current);
+      L.polyline(points, { color: themes[theme].routeHalo, weight: 8, opacity: 0.9, interactive: false }).addTo(markers.current);
+      L.polyline(points, { color: themes[theme].route, weight: 4, dashArray: '12 9', opacity: 1, interactive: false }).addTo(markers.current);
     }
     L.marker(homeCoordinates, { icon: L.divIcon({ className: 'base-marker', html: '<span aria-hidden="true">⌂</span>', iconSize: [28, 28], iconAnchor: [14, 14] }), title: 'Edgware Road area · approximate base', keyboard: false }).bindTooltip('Edgware Road · approximate base').addTo(markers.current);
     stops.forEach((stop, index) => {
