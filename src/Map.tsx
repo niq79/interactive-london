@@ -19,7 +19,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   const [tileAttempt, setTileAttempt] = useState(0);
   const selection = useRef(onSelect);
   selection.current = onSelect;
-  const basemap = theme === 'imperial' ? 'imperial' : 'osm';
+  const basemap = theme === 'imperial' || theme === 'rebel' ? theme : 'osm';
 
   function padding(): { paddingTopLeft: L.PointExpression; paddingBottomRight: L.PointExpression } {
     const height = map.current?.getSize().y ?? 700;
@@ -39,7 +39,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
     map.current = instance;
     lastFit.current = '';
     L.control.zoom({ position: 'topright' }).addTo(instance);
-    instance.createPane('imperialBasemap').style.zIndex = '200';
+    instance.createPane('themedBasemap').style.zIndex = '200';
     markers.current = L.layerGroup().addTo(instance);
     let previousWidth = 0;
     const resize = new ResizeObserver(() => {
@@ -66,11 +66,11 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
       layer = tiles;
       tiles.on('tileerror', () => { if (!disposed) setTilesFailed(true); });
     };
-    if (basemap === 'imperial') {
-      // Load the vector renderer only when Imperial is chosen.
-      import('./ImperialBasemap').then(({ createImperialBasemap }) => {
+    if (basemap !== 'osm') {
+      // Both Star Wars themes share one renderer and the same minimal map layers.
+      import('./ThemedBasemap').then(({ createThemedBasemap }) => {
         if (disposed) return;
-        const vector = createImperialBasemap();
+        const vector = createThemedBasemap(basemap);
         layer = vector;
         vector.addTo(instance);
         const gl = vector.getMaplibreMap();
@@ -80,7 +80,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
         if (disposed) return;
         if (layer && instance.hasLayer(layer)) layer.remove();
         addRaster();
-        onNotice('The Imperial basemap could not start. Showing the standard dark map.');
+        onNotice(`The ${themes[basemap].label} basemap could not start. Showing the standard map in your theme.`);
       });
     } else addRaster();
     return () => { disposed = true; if (layer && instance.hasLayer(layer)) layer.remove(); };
