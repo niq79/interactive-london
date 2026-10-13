@@ -19,6 +19,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   const [tileAttempt, setTileAttempt] = useState(0);
   const selection = useRef(onSelect);
   selection.current = onSelect;
+  const basemap = theme === 'imperial' ? 'imperial' : 'osm';
 
   function padding(): { paddingTopLeft: L.PointExpression; paddingBottomRight: L.PointExpression } {
     const height = map.current?.getSize().y ?? 700;
@@ -34,10 +35,11 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
 
   useEffect(() => {
     if (!container.current) return;
-    const instance = L.map(container.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: true }).setView([51.5105, -0.123], 13);
+    const instance = L.map(container.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: true, minZoom: 1, maxZoom: 19 }).setView([51.5105, -0.123], 13);
     map.current = instance;
     lastFit.current = '';
     L.control.zoom({ position: 'topright' }).addTo(instance);
+    instance.createPane('imperialBasemap').style.zIndex = '200';
     markers.current = L.layerGroup().addTo(instance);
     let previousWidth = 0;
     const resize = new ResizeObserver(() => {
@@ -51,15 +53,38 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
 
   useEffect(() => {
     if (!map.current || !online) return;
+    const instance = map.current;
+    let disposed = false;
+    let layer: L.Layer | undefined;
     setTilesFailed(false);
-    // Only on-screen tiles are requested. No prefetching or offline map downloads.
-    const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map.current);
-    tiles.on('tileerror', () => setTilesFailed(true));
-    return () => { tiles.remove(); };
-  }, [online, tileAttempt]);
+    // Normal visible-area requests only; no map prefetch or offline downloads.
+    const addRaster = () => {
+      const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(instance);
+      layer = tiles;
+      tiles.on('tileerror', () => { if (!disposed) setTilesFailed(true); });
+    };
+    if (basemap === 'imperial') {
+      // Load the vector renderer only when Imperial is chosen.
+      import('./ImperialBasemap').then(({ createImperialBasemap }) => {
+        if (disposed) return;
+        const vector = createImperialBasemap();
+        layer = vector;
+        vector.addTo(instance);
+        const gl = vector.getMaplibreMap();
+        gl.on('error', () => { if (!disposed) setTilesFailed(true); });
+        gl.on('idle', () => { if (!disposed && gl.areTilesLoaded()) setTilesFailed(false); });
+      }).catch(() => {
+        if (disposed) return;
+        if (layer && instance.hasLayer(layer)) layer.remove();
+        addRaster();
+        onNotice('The Imperial basemap could not start. Showing the standard dark map.');
+      });
+    } else addRaster();
+    return () => { disposed = true; if (layer && instance.hasLayer(layer)) layer.remove(); };
+  }, [online, tileAttempt, basemap]);
 
   useEffect(() => {
     if (!map.current || !markers.current) return;
@@ -123,23 +148,6 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   }
 
   return <div className="map-stage">
-    <svg className="map-filter-definitions" aria-hidden="true" focusable="false">
-      <defs>
-        <filter id="imperial-map-filter" colorInterpolationFilters="sRGB">
-          <feColorMatrix type="matrix" values="
-            .2126 .7152 .0722 0 0
-            .2126 .7152 .0722 0 0
-            .2126 .7152 .0722 0 0
-            0 0 0 1 0
-          " />
-          <feComponentTransfer>
-            <feFuncR type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
-            <feFuncG type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
-            <feFuncB type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
-          </feComponentTransfer>
-        </filter>
-      </defs>
-    </svg>
     <div ref={container} className="london-map" aria-label="Interactive London itinerary map" />
     <div className="map-label"><span className="live-dot" /> YOUR LONDON, MAPPED</div>
     <div className="map-actions">

@@ -35,6 +35,6 @@ Optional stops are marked separately. Sky Garden and The Garden at 120 are alter
 
 The production build generates a service worker that caches the app, itinerary and stories. The guide dialog confirms when the offline copy is ready. Map tiles, operator links, and Google Maps directions require internet. Google Fonts is optional; system fonts work offline.
 
-Only visible OpenStreetMap tiles are requested, with attribution. No map prefetch or bulk offline download is performed. GPS is requested only when the location button is pressed; it stays in the browser. Visited checkmarks are local to each device and are not synced. There is no analytics, backend or account requirement.
+Imperial uses a custom vector style on OpenFreeMap/OpenMapTiles data, with buildings, roads, and crisp labels styled independently. Its MapLibre renderer loads when Imperial is selected. The other themes use OpenStreetMap raster tiles. Both sources carry visible attribution; no map prefetch or bulk offline download is performed. GPS is requested only when the location button is pressed; it stays in the browser. Visited checkmarks are local to each device and are not synced. There is no analytics, backend or account requirement.
 
 Historical content links to the relevant sources in each stop card. Timings come from `plan.txt`, with travel notes checked on 13 October 2026. Coach departures from the plan are explicitly unverified; follow current operator timetables and booking confirmations.
