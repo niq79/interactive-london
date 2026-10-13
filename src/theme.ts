@@ -12,7 +12,7 @@ export const themeOrder: Theme[] = ['dark', 'light', 'imperial', 'rebel'];
 export const themes: Record<Theme, ThemeSettings> = {
   dark: { label: 'London Dark', themeColor: '#171e1b', route: '#ffc36a', routeHalo: '#111914' },
   light: { label: 'London Light', themeColor: '#faf8f2', route: '#a95712', routeHalo: '#ffffff' },
-  imperial: { label: 'Imperial', themeColor: '#0b0c0e', route: '#ff453a', routeHalo: '#050607' },
+  imperial: { label: 'Imperial', themeColor: '#2d2a26', route: '#ff4d00', routeHalo: '#2d2a26' },
   rebel: { label: 'Rebel', themeColor: '#f4ead5', route: '#c85027', routeHalo: '#fff7e8' },
 };
 

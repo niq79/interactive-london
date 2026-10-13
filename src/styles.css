@@ -22,12 +22,12 @@
 }
 :root[data-theme='imperial'] {
   color-scheme: dark;
-  --surface: #0b0c0e; --panel: #13161a; --soft: #1b2025; --hover: #252b31;
-  --text: #f4f4f1; --muted: #a7adb4; --line: #343a40; --accent: #ff453a; --accent-ink: #ffffff;
-  --pine: #ff453a; --cream: #0b0c0e; --map-bg: #090b0d; --shadow: #00000080; --pin: #151a1e; --pin-border: #747a80;
-  --book-bg: #281819; --book-text: #ff968f; --map-filter: invert(1) grayscale(1) brightness(.57) contrast(1.34);
-  --route: #ff453a; --route-halo: #050607; --active-ring: #ff453a45;
-  --brand-bg: #191d21; --brand-ink: #f4f4f1; --brand-dot: #ff453a;
+  --surface: #2d2a26; --panel: #37332e; --soft: #45413c; --hover: #514c46;
+  --text: #f4f1e1; --muted: #c6c6c6; --line: #6d6e71; --accent: #ff4d00; --accent-ink: #241f1b;
+  --pine: #ff4d00; --cream: #2d2a26; --map-bg: #2d2a26; --shadow: #16130f99; --pin: #2d2a26; --pin-border: #7b7f83;
+  --book-bg: #a3412d; --book-text: #f4f1e1; --map-filter: invert(1) grayscale(.9) sepia(.12) hue-rotate(335deg) saturate(.7) brightness(.58) contrast(1.28);
+  --route: #ff4d00; --route-halo: #2d2a26; --active-ring: #ff4d0045;
+  --brand-bg: #2d2a26; --brand-ink: #f4f1e1; --brand-dot: #ff4d00;
 }
 :root[data-theme='rebel'] {
   color-scheme: light;
@@ -94,7 +94,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 .theme-swatch > span { position: absolute; width: 7px; height: 7px; right: 2px; bottom: 2px; border-radius: 50%; }
 .theme-swatch.dark { background: #171e1b; } .theme-swatch.dark > span { background: #ffc36a; }
 .theme-swatch.light { background: #faf8f2; border-color: #173e3750; } .theme-swatch.light > span { background: #173e37; }
-.theme-swatch.imperial { background: #0b0c0e; } .theme-swatch.imperial > span { background: #ff453a; }
+.theme-swatch.imperial { background: #2d2a26; border-color: #c6c6c680; } .theme-swatch.imperial > span { background: #ff4d00; }
 .theme-swatch.rebel { background: #f4ead5; border-color: #203b4a55; } .theme-swatch.rebel > span { background: #c85027; }
 .menu-tools { display: flex; flex-direction: column; margin-top: 9px; }
 .menu-tools button { display: flex; align-items: center; gap: 11px; min-height: 44px; padding: 10px 8px; background: transparent; border-radius: 6px; text-align: left; font-size: 11px; }
