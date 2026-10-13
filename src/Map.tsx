@@ -123,6 +123,23 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   }
 
   return <div className="map-stage">
+    <svg className="map-filter-definitions" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="imperial-map-filter" colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values="
+            .2126 .7152 .0722 0 0
+            .2126 .7152 .0722 0 0
+            .2126 .7152 .0722 0 0
+            0 0 0 1 0
+          " />
+          <feComponentTransfer>
+            <feFuncR type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
+            <feFuncG type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
+            <feFuncB type="table" tableValues=".94 .78 .58 .46 .38 .32 .28 .25 .22 .20 .18 .17 .17 .20 .22 .18 .14 .13 .13 .15 .38" />
+          </feComponentTransfer>
+        </filter>
+      </defs>
+    </svg>
     <div ref={container} className="london-map" aria-label="Interactive London itinerary map" />
     <div className="map-label"><span className="live-dot" /> YOUR LONDON, MAPPED</div>
     <div className="map-actions">
