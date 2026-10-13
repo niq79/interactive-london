@@ -41,14 +41,28 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
     L.control.zoom({ position: 'topright' }).addTo(instance);
     instance.createPane('themedBasemap').style.zIndex = '200';
     markers.current = L.layerGroup().addTo(instance);
+    const attribution = instance.attributionControl.getContainer();
+    const stage = container.current.closest<HTMLElement>('.main-stage');
     let previousWidth = 0;
     const resize = new ResizeObserver(() => {
       instance.invalidateSize();
+      if (attribution) stage?.style.setProperty('--map-attribution-height', `${attribution.offsetHeight}px`);
       const width = container.current?.clientWidth ?? 0;
       if (Math.abs(width - previousWidth) > 20) { previousWidth = width; fit(); }
     });
     resize.observe(container.current);
-    return () => { resize.disconnect(); instance.remove(); map.current = null; };
+    if (attribution) resize.observe(attribution);
+    const refresh = () => { instance.invalidateSize(); };
+    const onVisibility = () => { if (!document.hidden) refresh(); };
+    window.addEventListener('pageshow', refresh);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      resize.disconnect();
+      window.removeEventListener('pageshow', refresh);
+      document.removeEventListener('visibilitychange', onVisibility);
+      stage?.style.removeProperty('--map-attribution-height');
+      instance.remove(); map.current = null;
+    };
   }, []);
 
   useEffect(() => {

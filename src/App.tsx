@@ -4,6 +4,7 @@ import { days, homeCoordinates, type Stop } from './data';
 import { isTheme, themeOrder, themes, type Theme } from './theme';
 import { directionsUrl, initialDay, londonDate, readSaved } from './utils';
 import TripMap from './Map';
+import { syncStandaloneViewport } from './viewport';
 
 const labels = { landmark: 'History & landmarks', park: 'A little green space', shopping: 'Browse & discover', food: 'Food & a pause', transport: 'The next journey', film: 'Behind the screen', show: 'An evening on stage', museum: 'Objects & stories' };
 const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
@@ -43,6 +44,7 @@ export default function App() {
   const completed = required.filter(item => visited.includes(item.id)).length;
   const today = londonDate();
 
+  useEffect(syncStandaloneViewport, []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themes[theme].themeColor);

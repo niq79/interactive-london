@@ -6,6 +6,8 @@ The map opens in dark mode. Tap the floating L/day control to choose a day, sele
 
 On iPhone, use Safari → Share → Add to Home Screen, enable Open as Web App if shown, and launch the London icon for an experience without the address bar. The site includes standalone app metadata and an Apple touch icon. Browser toolbar visibility in a normal tab is controlled by Safari.
 
+Installed apps use a separate full-screen layout. On iOS, the app compensates for shortened viewport heights when the window matches the device's display width, and updates on rotation and resume. Map credits and the stop card respect the bottom safe area while the map extends beneath it. A strip reserved outside the web view by iOS cannot be drawn into by the page.
+
 ## Run locally
 
 ```sh
