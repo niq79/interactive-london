@@ -25,7 +25,7 @@
   --surface: #2d2a26; --panel: #37332e; --soft: #45413c; --hover: #514c46;
   --text: #f4f1e1; --muted: #c6c6c6; --line: #6d6e71; --accent: #ff4d00; --accent-ink: #241f1b;
   --pine: #ff4d00; --cream: #2d2a26; --map-bg: #2d2a26; --shadow: #16130f99; --pin: #2d2a26; --pin-border: #7b7f83;
-  --book-bg: #a3412d; --book-text: #f4f1e1; --map-filter: invert(1) grayscale(.9) sepia(.12) hue-rotate(335deg) saturate(.7) brightness(.58) contrast(1.28);
+  --book-bg: #a3412d; --book-text: #f4f1e1; --map-filter: invert(1) grayscale(.78) sepia(.12) hue-rotate(335deg) saturate(.76) brightness(.82) contrast(1.06);
   --route: #ff4d00; --route-halo: #2d2a26; --active-ring: #ff4d0045;
   --brand-bg: #2d2a26; --brand-ink: #f4f1e1; --brand-dot: #ff4d00;
 }
@@ -148,8 +148,12 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 .leaflet-control-zoom a { width: 42px !important; height: 42px !important; line-height: 42px !important; font-weight: 400 !important; color: var(--text) !important; background: var(--surface) !important; border-color: var(--line) !important; }
 .trip-pin { background: var(--pin); border: 1px solid var(--pin-border); border-radius: 50%; display: grid !important; place-items: center; font-size: 11px; font-weight: 700; box-shadow: 0 3px 9px var(--shadow); color: var(--text); }
 .trip-pin.active { background: var(--accent); border-color: var(--surface); border-width: 3px; color: var(--accent-ink); box-shadow: 0 0 0 6px var(--active-ring), 0 4px 12px var(--shadow); }
+.trip-pin.active:before { content: ''; position: absolute; inset: -8px; z-index: -1; border: 2px solid var(--accent); border-radius: 50%; animation: selected-stop-pulse 2.6s ease-out infinite; pointer-events: none; }
 .trip-pin.done:not(.active) { background: var(--soft); border-color: var(--accent); color: var(--accent); }
 .trip-pin.optional { border-style: dashed; }
+.user-location-marker { display: grid !important; place-items: center; border-radius: 50%; }
+.user-location-marker:before { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--accent); animation: gps-pulse 1.75s cubic-bezier(.2, .65, .35, 1) infinite; pointer-events: none; }
+.user-location-marker > span { position: relative; z-index: 1; width: 14px; height: 14px; border: 3px solid var(--surface); border-radius: 50%; background: var(--accent); box-shadow: 0 2px 8px var(--shadow); }
 .base-marker { background: var(--surface); color: var(--book-text); border: 1px solid var(--pin-border); border-radius: 7px; display: grid !important; place-items: center; font-size: 23px; }
 .leaflet-tooltip { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 5px; font-size: 10px; box-shadow: 0 3px 10px var(--shadow); padding: 7px 10px; }
 .leaflet-tooltip-top:before { border-top-color: var(--surface); }
@@ -240,6 +244,14 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 .guide-done { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 12px; padding: 15px; border-radius: 7px; background: var(--accent); color: var(--accent-ink); }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes gps-pulse {
+  0% { opacity: .65; transform: scale(.65); }
+  72%, 100% { opacity: 0; transform: scale(2.2); }
+}
+@keyframes selected-stop-pulse {
+  0% { opacity: .7; transform: scale(.78); }
+  62%, 100% { opacity: 0; transform: scale(1.22); }
+}
 @media (min-width: 1450px) { .itinerary-sidebar { width: 390px; } .stop-sheet { width: 430px; right: 35px; bottom: 35px; } .sheet-title h2 { font-size: 25px; } }
 @media (max-width: 1150px) and (min-width: 768px) { .itinerary-sidebar { width: 315px; } .day-intro { padding-left: 24px; padding-right: 24px; } .day-intro h1 { font-size: 27px; } .stop-sheet { width: 355px; right: 18px; bottom: 22px; } .map-label { display: none; } .map-legend { bottom: auto; top: 25px; font-size: 8px; left: 18px; } .header-caption { display: none; } .view-toggle { margin-left: auto; } }
 @media (max-width: 767px) {

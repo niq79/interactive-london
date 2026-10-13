@@ -10,7 +10,7 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
-  const userLocation = useRef<L.CircleMarker | null>(null);
+  const userLocation = useRef<L.Marker | null>(null);
   const lastFit = useRef('');
   const currentStops = useRef(stops);
   currentStops.current = stops;
@@ -102,7 +102,18 @@ export default function TripMap({ stops, selected, visited, onSelect, online, on
       const point: [number, number] = [position.coords.latitude, position.coords.longitude];
       if (map.current) {
         userLocation.current?.remove();
-        userLocation.current = L.circleMarker(point, { radius: 8, color: '#fff', weight: 3, fillColor: '#427cc3', fillOpacity: 1 }).bindTooltip('You are here').addTo(map.current);
+        userLocation.current = L.marker(point, {
+          icon: L.divIcon({
+            className: 'user-location-marker',
+            html: '<span aria-hidden="true"></span>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+          }),
+          title: 'You are here',
+          alt: 'Your current location',
+          keyboard: false,
+          zIndexOffset: 2000,
+        }).bindTooltip('You are here', { direction: 'top', offset: [0, -12] }).addTo(map.current);
         map.current.setView(point, 15);
       }
     }, error => {
